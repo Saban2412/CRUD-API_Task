@@ -20,10 +20,10 @@ app.MapGet("/health", ()=> new
     status = "ok"
 });
 
-//GetAll()
+//GetAll() endpoint
 app.MapGet("/tasks",()=>tasks);
 
-//GetById()
+//GetById() endpoint
 app.MapGet("/tasks/{id}",(int id) =>
 {
     var task = tasks.FirstOrDefault(t=>t.Id==id);
@@ -38,7 +38,7 @@ app.MapGet("/tasks/{id}",(int id) =>
     return Results.Ok(task);
 });
 
-//CreateNew()
+//CreateNew() endpoint
 app.MapPost("/tasks",(CreateTaskRequest request) =>
 {
     if (string.IsNullOrWhiteSpace(request.Title))
@@ -60,6 +60,66 @@ app.MapPost("/tasks",(CreateTaskRequest request) =>
     return Results.Created($"/tasks/{newtask.Id}",newtask);
 });
 
+//Update() endpoint
+app.MapPut("/tasks/{id}", (int id, UpdateTaskRequest request) =>
+{
+    var task = tasks.FirstOrDefault(t => t.Id == id);
+
+    if (task is null)
+    {
+        return Results.NotFound(new
+        {
+            error = $"Task {id} not found"
+        });
+    }
+
+    if (request.Title is null && request.Done is null)
+    {
+        return Results.BadRequest(new
+        {
+            error = "At least one field must be provided"
+        });
+    }
+
+    if (request.Title is not null)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            return Results.BadRequest(new
+            {
+                error = "Title cannot be empty"
+            });
+        }
+
+        task.Title = request.Title;
+    }
+
+    if (request.Done is not null)
+    {
+        task.Done = request.Done.Value;
+    }
+
+    return Results.Ok(task);
+});
+
+//Delete() endpoint
+app.MapDelete("/tasks/{id}", (int id) =>
+{
+    var task = tasks.FirstOrDefault(t => t.Id == id);
+
+    if (task is null)
+    {
+        return Results.NotFound(new
+        {
+            error = $"Task {id} not found"
+        });
+    }
+
+    tasks.Remove(task);
+
+    return Results.NoContent();
+});
+
 app.Run();
 
 class TaskItem
@@ -71,4 +131,9 @@ class TaskItem
 class CreateTaskRequest
 {
     public string? Title{get;set;}
+}
+class UpdateTaskRequest
+{
+    public string? Title { get; set; }
+    public bool? Done { get; set; }
 }
