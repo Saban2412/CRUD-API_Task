@@ -1,5 +1,12 @@
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddOpenApi();
 var app = builder.Build();
+app.MapOpenApi();
+
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/openapi/v1.json", "Task API v1");
+});
 
 var tasks = new List<TaskItem>
 {
@@ -12,16 +19,16 @@ var tasks = new List<TaskItem>
 app.MapGet("/", () => new
 {
     name = "Task API", version = "1.0", endpoints = new[] {"/tasks"}
-});
+}).WithSummary("Get API information");
 
 //Health endpoint
 app.MapGet("/health", ()=> new
 {
     status = "ok"
-});
+}).WithSummary("Check API health");
 
 //GetAll() endpoint
-app.MapGet("/tasks",()=>tasks);
+app.MapGet("/tasks",()=>tasks).WithSummary("Get all tasks");
 
 //GetById() endpoint
 app.MapGet("/tasks/{id}",(int id) =>
@@ -36,7 +43,7 @@ app.MapGet("/tasks/{id}",(int id) =>
         });
     }
     return Results.Ok(task);
-});
+}).WithSummary("Get a task by ID");
 
 //CreateNew() endpoint
 app.MapPost("/tasks",(CreateTaskRequest request) =>
@@ -58,7 +65,7 @@ app.MapPost("/tasks",(CreateTaskRequest request) =>
     tasks.Add(newtask);
 
     return Results.Created($"/tasks/{newtask.Id}",newtask);
-});
+}).WithSummary("Create a task");
 
 //Update() endpoint
 app.MapPut("/tasks/{id}", (int id, UpdateTaskRequest request) =>
@@ -100,7 +107,7 @@ app.MapPut("/tasks/{id}", (int id, UpdateTaskRequest request) =>
     }
 
     return Results.Ok(task);
-});
+}).WithSummary("Update a task");
 
 //Delete() endpoint
 app.MapDelete("/tasks/{id}", (int id) =>
@@ -118,7 +125,7 @@ app.MapDelete("/tasks/{id}", (int id) =>
     tasks.Remove(task);
 
     return Results.NoContent();
-});
+}).WithSummary("Delete a task");
 
 app.Run();
 
